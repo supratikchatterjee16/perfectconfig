@@ -6,5 +6,5 @@ build:
 	python -m build
 
 upload: build
-	python -m pip install --upgrade twine
-	python -m twine upload --repository perfectconfig dist/*
+	python -m pip install --upgrade twine pkginfo
+	python -m twine upload dist/*
