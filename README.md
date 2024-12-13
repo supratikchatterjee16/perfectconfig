@@ -1,6 +1,6 @@
 # Perfect Config
 
-Manage your configuations in a mechanism similar to `SQLAlchemy`.
+Manage your configuations in a mechanism similar to [SQLAlchemy](https://www.sqlalchemy.org/).
 
 ## Usage
 
@@ -13,9 +13,9 @@ from perfectconfig import GlobalConfig, ConfigProperty, config_store
 
 class SampleServerConfiguration(GlobalConfig):
     _name = "server_config"
-    port = ConfigProperty("port", default=8080)
-    host = ConfigProperty("host", default="localhost")
-    name = ConfigProperty("name", default="sample_server")
+    port = ConfigProperty(int, "port", default=8080)
+    host = ConfigProperty(str, "host", default="localhost")
+    name = ConfigProperty(str, "name", default="sample_server")
 
 config_store.track() # Tracks the configuration defined in the file
 ```
@@ -56,7 +56,7 @@ What we do provide is a clean-up mechanism:
 ```python
 from perfectconfig import config_store
 config_store.initialize("my-org", "my-product", type="yaml")
-config_store.purge()
+config_store.remove()
 ```
 
 This is expected to help you manage your configurations, but in a human readable way, so offers no encryption options, at the moment.

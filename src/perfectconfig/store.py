@@ -13,7 +13,6 @@ from werkzeug.security import generate_password_hash
 
 from .types import GlobalConfig, password, ConfigProperty
 
-
 class ConfigStore(dict):
     _config_loc: Optional[Path] = None
     _single_file: bool = True
