@@ -2,6 +2,16 @@
 
 Manage your configuations in a mechanism similar to [SQLAlchemy](https://www.sqlalchemy.org/).
 
+What does it provide?
+
+- Single globally available configuration, via the `config_store`
+- Automatic JSON and YAML config files, with options to create atomic, or a unified configuration file.
+- Dictionary access to configurations
+- Prompting users during initial setup of application.
+- Active and Lazy loading of configurations
+- Removes biolerplate codes for configuration management
+- Usage of system agnostic logging locations
+
 ## Usage
 
 Install using `pip install perfectconfig`.
@@ -75,7 +85,7 @@ Everything happens under the hood without the explicit intervention of the user.
 
 ## Under the hood
 
-Uses the in-built `json` library, and `pyyaml` and `appdirs` to provide the functionality in a structured way.
+Uses the in-built `json` library, and `pyyaml` and `appdirs`.
 
 This is inspired from the property loading mechanism in `Spring Boot`, with the mechanism used in `SQLAlchemy`.
 
@@ -85,9 +95,19 @@ If the configurations objects are changed(such as during development), the objec
 
 ## Planned
 
+Configurations segregation for automatic configuration on environments.
+
 ```python
 from perfectconfig import config_store
 config_store.load(yourpackage.env_configs.prod)
 config_store.load(yourpackage.env_configs.dev)
 ...
 ```
+
+Prompt prevention for automated deployments(prompts during initial setup may be undesirable, for remote nodes being deployed to via a CI/CD pipeline).
+
+```python
+from perfectconfig import config_store
+config_store.initialize(org_name, app_name, prompt=False)
+```
+Automatic detection and backup, on config schema changes, with proper porting of existing configurations, allowing for backups for reverting deployments.
