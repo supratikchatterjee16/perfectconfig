@@ -157,7 +157,7 @@ class ConfigStore(dict):
                     config_name = value.__dict__['name'] if value.__dict__['name'] else obj_name
                     if value.__dict__['prompt']:
                         defaults[config_name] = self._prompt(value)
-                    elif value.__dict__['_val']:
+                    elif value.__dict__['_val'] is not None:
                         defaults[config_name] = value._val
                     else:
                         raise GlobalConfigError(f'No default value or prompt specified, for creating initial configurations for {current_cls.__name__}.{obj_name}')
