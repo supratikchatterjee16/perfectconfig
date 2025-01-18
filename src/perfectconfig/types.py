@@ -1,6 +1,5 @@
 import inspect
 
-
 class password(str):
     def __new__(cls, content):
         return super().__new__(cls, content)
@@ -21,12 +20,12 @@ class ConfigProperty:
     def __set__(self, instance, value):
         if not isinstance(value, self.datatype):
             raise TypeError(f"Expected {self.datatype} but received {type(value)}")
-        instance._val = value
+        self._val = value
 
     def __get__(self, instance, objtype=None):
-        if instance is None:
-            return self
-        return instance._val
+        # if instance is None:
+        #     return self
+        return self._val
 
     def __eq__(self, other):
         if other is self.datatype:
@@ -53,16 +52,11 @@ class GlobalConfig:
 
     def to_dict(self) -> dict:
         data = {}
-        for name, member in inspect.getmembers(self):
-            if (
-                not inspect.ismethod(member)
-                and not inspect.isfunction(member)
-                and isinstance(member, ConfigProperty)
-            ):
-                if member.name is None:
-                    data[name] = member
-                else:
-                    data[member.name] = member
+        for name, value in self.__class__.__dict__.items():
+            for obj_name, obj_value in inspect.getmembers(self):
+                if obj_name == name and isinstance(value, ConfigProperty):
+                    config_name = value.__dict__['name'] if value.__dict__['name'] is not None else obj_name
+                    data[config_name] = obj_value
         return data
 
     def from_dict(self, buffer: dict):

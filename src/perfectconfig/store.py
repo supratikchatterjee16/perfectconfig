@@ -1,17 +1,16 @@
 import getpass
 import inspect
 import os
-import sys
 import appdirs
 import json
 import yaml
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 from werkzeug.security import generate_password_hash
 
 from .types import GlobalConfig, password, ConfigProperty
+from .exceptions import GlobalConfigError, PerfectConfigRuntimeException
 
 class ConfigStore(dict):
     _config_loc: Optional[Path] = None
@@ -121,7 +120,7 @@ class ConfigStore(dict):
         elif self._format == "yaml":
             self._save_yaml()
         else:
-            raise TypeError("Unrecognized format")
+            raise PerfectConfigRuntimeException("Unsupported file format")
 
     def store(self):
         config = {}
@@ -136,7 +135,7 @@ class ConfigStore(dict):
         for name, obj in inspect.getmembers(current_module, inspect.isclass):
             if issubclass(obj, GlobalConfig) and obj is not GlobalConfig:
                 print("Configuration Definition found for " + name)
-                self[obj._name] = obj
+                self[obj._name] = obj()
                 if self._config_loc is not None:
                     self._from_file(obj)
 
@@ -149,16 +148,18 @@ class ConfigStore(dict):
 
     def _load_members(self, cls) -> dict:
         defaults = {}
-        for name, member in inspect.getmembers(self[cls]):
-            if (
-                not inspect.ismethod(member)
-                and not inspect.isfunction(member)
-                and isinstance(member, ConfigProperty)
-            ):
-                config_name = member.name if member.name else name
-                defaults[config_name] = member._val
-                if member.prompt is not None:
-                    defaults[config_name] = self._prompt(member)
+        #TODO: Check implemented logic for .to_dict() below, and implement similar mechanism for the logic below.
+        current_cls = self[cls].__class__
+        for name, value in current_cls.__dict__.items():
+            for obj_name, obj_value in inspect.getmembers(self[cls]):
+                if name == obj_name and isinstance(value, ConfigProperty):
+                    config_name = value.__dict__['name'] if value.__dict__['name'] else obj_name
+                    if value.__dict__['prompt']:
+                        defaults[config_name] = self._prompt(value)
+                    elif value.__dict__['_val']:
+                        defaults[config_name] = value._val
+                    else:
+                        raise GlobalConfigError(f'No default value or prompt specified, for creating initial configurations for {current_cls.__name__}.{obj_name}')
         return defaults
 
     def _load_defaults(self, obj: Optional[GlobalConfig]=None):
@@ -182,7 +183,7 @@ class ConfigStore(dict):
             self[config._name].from_dict(self._buffer)
         else:
             for key in self.keys():
-                self[key].from_dict(self[key], self._buffer[key])
+                self[key].from_dict(self._buffer[key])
                
         self._buffer.clear()
 
