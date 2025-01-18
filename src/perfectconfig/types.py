@@ -60,13 +60,10 @@ class GlobalConfig:
         return data
 
     def from_dict(self, buffer: dict):
-        for name, member in inspect.getmembers(self):
-            if (
-                not inspect.ismethod(member)
-                and not inspect.isfunction(member)
-                and isinstance(member, ConfigProperty)
-            ):
-                if member.name is None:
-                    member = buffer[name]
-                else:
-                    member = buffer[member.name]
+        for name, value in self.__class__.__dict__.items():
+            for obj_name, obj_value in inspect.getmembers(self):
+                if obj_name == name and isinstance(value, ConfigProperty):
+                    config_name = value.__dict__['name'] if value.__dict__['name'] is not None else obj_name
+                    if hasattr(self, obj_name):
+                        setattr(self, obj_name, buffer[config_name])
+

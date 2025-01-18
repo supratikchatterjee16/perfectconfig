@@ -179,7 +179,7 @@ class ConfigStore(dict):
         elif self._format == "yaml":
             self._load_yaml(config)
         else:
-            raise TypeError("Unrecognized format")
+            raise PerfectConfigRuntimeException("Unsupported file format")
         if config is not None:
             self[config._name].from_dict(self._buffer)
         else:
@@ -200,7 +200,7 @@ class ConfigStore(dict):
             try:
                 os.makedirs(self._config_loc.absolute())
             except OSError:
-                print("Warning: The folders already exist.")
+                logger.warning("The folders already exist.")
             self._load_defaults()
             self._save_unchecked()
         else:
