@@ -8,10 +8,12 @@ import yaml
 from pathlib import Path
 from typing import Optional
 from werkzeug.security import generate_password_hash
+import logging
 
 from .types import GlobalConfig, password, ConfigProperty
 from .exceptions import GlobalConfigError, PerfectConfigRuntimeException
 
+logger = logging.getLogger('perfect-config')
 class ConfigStore(dict):
     _config_loc: Optional[Path] = None
     _single_file: bool = True
@@ -134,7 +136,7 @@ class ConfigStore(dict):
         current_module = inspect.getmodule(inspect.stack()[1][0])
         for name, obj in inspect.getmembers(current_module, inspect.isclass):
             if issubclass(obj, GlobalConfig) and obj is not GlobalConfig:
-                print("Configuration Definition found for " + name)
+                logging.info("Configuration Definition found for " + name)
                 self[obj._name] = obj()
                 if self._config_loc is not None:
                     self._from_file(obj)
@@ -148,7 +150,6 @@ class ConfigStore(dict):
 
     def _load_members(self, cls) -> dict:
         defaults = {}
-        #TODO: Check implemented logic for .to_dict() below, and implement similar mechanism for the logic below.
         current_cls = self[cls].__class__
         for name, value in current_cls.__dict__.items():
             for obj_name, obj_value in inspect.getmembers(self[cls]):
@@ -207,7 +208,6 @@ class ConfigStore(dict):
 
     def remove(self):
         """A managed function to remove all related configuration files and configurations from the object."""
-        print(self._config_loc, os.path.exists(self._config_loc))
         if self._config_loc is not None and os.path.exists(self._config_loc):
             for path in self._config_loc.iterdir():
                 os.remove(path)
