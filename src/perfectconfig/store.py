@@ -174,12 +174,16 @@ class ConfigStore(dict):
             
 
     def _from_file(self, config: Optional[GlobalConfig] = None):
-        if self._format == "json":
-            self._load_json(config)
-        elif self._format == "yaml":
-            self._load_yaml(config)
-        else:
-            raise PerfectConfigRuntimeException("Unsupported file format")
+        try:
+            if self._format == "json":
+                self._load_json(config)
+            elif self._format == "yaml":
+                self._load_yaml(config)
+            else:
+                raise PerfectConfigRuntimeException("Unsupported file format")
+        except FileNotFoundError:
+            logging.error("Configurations could not be loaded. Was it deleted/relocated perhaps?")
+            raise PerfectConfigRuntimeException("Configurations not found")
         if config is not None:
             self[config._name].from_dict(self._buffer)
         else:
@@ -199,11 +203,13 @@ class ConfigStore(dict):
         if not os.path.exists(self._config_loc.absolute()):
             try:
                 os.makedirs(self._config_loc.absolute())
+                logger.info("Created configurations location: " + str(self._config_loc.absolute()))
             except OSError:
                 logger.warning("The folders already exist.")
             self._load_defaults()
             self._save_unchecked()
         else:
+            logger.info("Loading configurations at: " + str(self._config_loc.absolute()))
             self._from_file()
 
     def remove(self):

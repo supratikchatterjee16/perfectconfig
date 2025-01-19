@@ -91,7 +91,7 @@ This is inspired from the property loading mechanism in `Spring Boot`, with the 
 
 ## Warnings
 
-If the configurations objects are changed(such as during development), the objects aren't automanaged yet. This will require a manual removal or updation of the configurations for them to operate as expected.
+If the configurations objects are changed(such as during development), the objects aren't auto-managed yet. This will require a manual removal or updation of the configurations for them to operate as expected.
 
 ## Planned
 
@@ -110,4 +110,9 @@ Prompt prevention for automated deployments(prompts during initial setup may be 
 from perfectconfig import config_store
 config_store.initialize(org_name, app_name, prompt=False)
 ```
+
 Automatic detection and backup, on config schema changes, with proper porting of existing configurations, allowing for backups for reverting deployments.
+
+Creating a debug mode, that updates the application configuration from defaults every time(with options to prevent debug mode inside the configuration defintion: i.e. `GlobalConfig._no_debug : bool` and `config_store.initialize(org, product, format="json", single_file=True, user=True, debug=False)`).
+
+Recreation of deleted configuration files from defaults/prompts.
