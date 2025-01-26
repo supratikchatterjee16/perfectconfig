@@ -19,7 +19,7 @@ class ConfigProperty:
     
     def __set__(self, instance, value):
         if not isinstance(value, self.datatype):
-            raise TypeError(f"Expected {self.datatype} but received {type(value)}")
+            raise TypeError(f"Expected {self.datatype} but received {type(value)}.")
         self._val = value
 
     def __get__(self, instance, objtype=None):

@@ -185,10 +185,16 @@ class ConfigStore(dict):
             logging.error("Configurations could not be loaded. Was it deleted/relocated perhaps?")
             raise PerfectConfigRuntimeException("Configurations not found")
         if config is not None:
-            self[config._name].from_dict(self._buffer)
+            try:
+                self[config._name].from_dict(self._buffer)
+            except TypeError as e:
+                raise PerfectConfigRuntimeException(str(e) + f' Reading configuration \"{config._name}\".')
         else:
-            for key in self.keys():
-                self[key].from_dict(self._buffer[key])
+            try:
+                for key in self.keys():
+                    self[key].from_dict(self._buffer[key])
+            except TypeError as e:
+                raise PerfectConfigRuntimeException(str(e) + f' Reading configuration \"{key}\".')
                
         self._buffer.clear()
 
