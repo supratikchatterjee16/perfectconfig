@@ -26,19 +26,19 @@ class ConfigStore(dict):
             with open(
                 os.path.join(self._config_loc, name_template.format("config")), "w"
             ) as config_file:
-                yaml.dump(config_file, self._buffer)
+                yaml.dump(self._buffer, config_file)
         else:
             if key is not None:
                 with open(
                     os.path.join(self._config_loc, name_template.format(key)), "w"
                 ) as config_file:
-                    yaml.dump(config_file, self._buffer[key])
+                    yaml.dump(self._buffer[key], config_file)
             else:
                 for entry in self._buffer.keys():
                     with open(
                         os.path.join(self._config_loc, name_template.format(entry)), "w"
                     ) as config_file:
-                        yaml.dump(config_file, self._buffer[entry])
+                        yaml.dump(self._buffer[entry], config_file)
         self._buffer.clear()
 
     def _save_json(self, key=None):
@@ -216,7 +216,12 @@ class ConfigStore(dict):
             self._save_unchecked()
         else:
             logger.info("Loading configurations at: " + str(self._config_loc.absolute()))
-            self._from_file()
+            try:
+                self._from_file()
+            except:
+                # This scenario occurs when config files are missing
+                self._load_defaults()
+                self._save_unchecked()
 
     def remove(self):
         """A managed function to remove all related configuration files and configurations from the object."""
