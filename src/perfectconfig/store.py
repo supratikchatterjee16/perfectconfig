@@ -49,17 +49,20 @@ class ConfigStore(dict):
             ) as config_file:
                 json.dump(self._buffer, config_file, indent=2)
         else:
+            print(key, key is None)
             if key is not None:
                 with open(
                     os.path.join(self._config_loc, name_template.format(key)), "w"
                 ) as config_file:
+                    print(key)
                     json.dump(self._buffer[key], config_file, indent=2)
             else:
                 for entry in self._buffer.keys():
                     with open(
                         os.path.join(self._config_loc, name_template.format(entry)), "w"
                     ) as config_file:
-                        json.dump(config_file, self._buffer[entry])
+                        print(entry)
+                        json.dump(self._buffer[entry], config_file, indent=2)
         self._buffer.clear()
 
     def _load_json(self, config: Optional[GlobalConfig] = None):
@@ -110,12 +113,14 @@ class ConfigStore(dict):
         elif self._format == "yaml":
             self._load_yaml(config)
 
+        print("Saving configuration for ", config._name)
         self._buffer[config._name] = config.to_dict()
 
         if self._format == "json":
             self._save_json(config._name)
         elif self._format == "yaml":
             self._save_yaml(config._name)
+    
     def _save_unchecked(self):
         if self._format == "json":
                 self._save_json()
@@ -216,19 +221,15 @@ class ConfigStore(dict):
             self._save_unchecked()
         else:
             logger.info("Loading configurations at: " + str(self._config_loc.absolute()))
-            try:
-                self._from_file()
-            except:
-                # This scenario occurs when config files are missing
-                self._load_defaults()
-                self._save_unchecked()
+            self._from_file()
+            
 
     def remove(self):
         """A managed function to remove all related configuration files and configurations from the object."""
         if self._config_loc is not None and os.path.exists(self._config_loc):
             for path in self._config_loc.iterdir():
                 os.remove(path)
-            os.remove(self._config_loc)
+            os.rmdir(self._config_loc)
         self.clear()
 
 

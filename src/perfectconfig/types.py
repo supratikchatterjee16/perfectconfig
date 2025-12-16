@@ -1,10 +1,5 @@
 import inspect
 
-class password(str):
-    def __new__(cls, content):
-        return super().__new__(cls, content)
-
-
 class ConfigProperty:
     def __init__(
         self, datatype, name: str = None, default: any = None, prompt: str = None
@@ -12,10 +7,7 @@ class ConfigProperty:
         self.datatype = datatype
         self.name = name
         self.prompt = prompt
-        if datatype != password:
-            self._val = default
-        else:
-            self._val = password(default)
+        self._val = default
     
     def __set__(self, instance, value):
         if not isinstance(value, self.datatype):
