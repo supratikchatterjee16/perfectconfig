@@ -1,4 +1,3 @@
-import getpass
 import inspect
 import os
 import appdirs
@@ -7,10 +6,9 @@ import yaml
 
 from pathlib import Path
 from typing import Optional
-from werkzeug.security import generate_password_hash
 import logging
 
-from .types import GlobalConfig, password, ConfigProperty
+from .types import GlobalConfig, ConfigProperty
 from .exceptions import GlobalConfigError, PerfectConfigRuntimeException
 
 logger = logging.getLogger('perfect-config')
@@ -20,121 +18,62 @@ class ConfigStore(dict):
     _format: str = "json"
     _buffer: dict = {}
 
-    def _save_yaml(self, key=None):
-        name_template = "{}.yml"
+    def _save(self, key=None):
+        dump, name_template = (json.dump, "{}.json") if self._format == "json" else (yaml.safe_dump, "{}.yml")
+
         if self._single_file:
             with open(
                 os.path.join(self._config_loc, name_template.format("config")), "w"
             ) as config_file:
-                yaml.dump(self._buffer, config_file)
+                dump(self._buffer, config_file)
         else:
             if key is not None:
                 with open(
                     os.path.join(self._config_loc, name_template.format(key)), "w"
                 ) as config_file:
-                    yaml.dump(self._buffer[key], config_file)
+                    dump(self._buffer[key], config_file)
             else:
                 for entry in self._buffer.keys():
                     with open(
                         os.path.join(self._config_loc, name_template.format(entry)), "w"
                     ) as config_file:
-                        yaml.dump(self._buffer[entry], config_file)
+                        dump(self._buffer[entry], config_file)
         self._buffer.clear()
+    
+    def _load(self, config: Optional[GlobalConfig] = None):
+        load, name_template = (json.load, "{}.json") if self._format == "json" else (yaml.safe_load, "{}.yml")
 
-    def _save_json(self, key=None):
-        name_template = "{}.json"
-        if self._single_file:
-            with open(
-                os.path.join(self._config_loc, name_template.format("config")), "w"
-            ) as config_file:
-                json.dump(self._buffer, config_file, indent=2)
-        else:
-            print(key, key is None)
-            if key is not None:
-                with open(
-                    os.path.join(self._config_loc, name_template.format(key)), "w"
-                ) as config_file:
-                    print(key)
-                    json.dump(self._buffer[key], config_file, indent=2)
-            else:
-                for entry in self._buffer.keys():
-                    with open(
-                        os.path.join(self._config_loc, name_template.format(entry)), "w"
-                    ) as config_file:
-                        print(entry)
-                        json.dump(self._buffer[entry], config_file, indent=2)
-        self._buffer.clear()
-
-    def _load_json(self, config: Optional[GlobalConfig] = None):
-        name_template = "{}.json"
         if self._single_file:
             with open(
                 os.path.join(self._config_loc, name_template.format("config")), "r"
             ) as config_file:
-                self._buffer = json.load(config_file)
+                self._buffer = load(config_file)
         else:
             if config is None:
                 for key in self.keys():
                     with open(
                         os.path.join(self._config_loc, name_template.format(key)), "r"
                     ) as config_file:
-                        self._buffer.update(json.load(config_file))
+                        self._buffer[key] = load(config_file)
             else:
                 with open(
                     os.path.join(self._config_loc, name_template.format(config._name)),
                     "r",
                 ) as config_file:
-                    self._buffer.update(json.load(config_file))
-
-    def _load_yaml(self, config: Optional[GlobalConfig] = None):
-        name_template = "{}.yml"
-        if self._single_file:
-            with open(
-                os.path.join(self._config_loc, name_template.format("config")), "r"
-            ) as config_file:
-                self._buffer = yaml.safe_load(config_file)
-        else:
-            if config is None:
-                for key in self.keys():
-                    with open(
-                        os.path.join(self._config_loc, name_template.format(key)), "r"
-                    ) as config_file:
-                        self._buffer.update(yaml.safe_load(config_file))
-            else:
-                with open(
-                    os.path.join(self._config_loc, name_template.format(config._name)),
-                    "r",
-                ) as config_file:
-                    self._buffer.update(yaml.safe_load(config_file))
-
+                    self._buffer.update(load(config_file))
+    
     def save(self, config: GlobalConfig):
-        if self._format == "json":
-            self._load_json(config)
-        elif self._format == "yaml":
-            self._load_yaml(config)
+        self._load(config)
 
-        print("Saving configuration for ", config._name)
         self._buffer[config._name] = config.to_dict()
 
-        if self._format == "json":
-            self._save_json(config._name)
-        elif self._format == "yaml":
-            self._save_yaml(config._name)
+        self._save(config._name)
     
     def _save_unchecked(self):
-        if self._format == "json":
-                self._save_json()
-        elif self._format == "yaml":
-            self._save_yaml()
+        if self._format in ["json", "yaml"]:
+                self._save()
         else:
             raise PerfectConfigRuntimeException("Unsupported file format")
-
-    def store(self):
-        config = {}
-        with open(self._config_loc, "w") as config_file:
-            for key in self.keys():
-                config.update(self[key].get_all())
-            json.dump(config_file, config)
 
     def track(self):
         # Pre-intialization, and post initialization value injection
@@ -147,11 +86,7 @@ class ConfigStore(dict):
                     self._from_file(obj)
 
     def _prompt(self, member) -> str:
-        if member.datatype is password:
-            data = getpass.getpass(prompt="{}: ".format(member.prompt))
-            return generate_password_hash(data)
-        else:
-            return input("{}: ".format(member.prompt))
+        return input("{}: ".format(member.prompt))
 
     def _load_members(self, cls) -> dict:
         defaults = {}
@@ -180,12 +115,7 @@ class ConfigStore(dict):
 
     def _from_file(self, config: Optional[GlobalConfig] = None):
         try:
-            if self._format == "json":
-                self._load_json(config)
-            elif self._format == "yaml":
-                self._load_yaml(config)
-            else:
-                raise PerfectConfigRuntimeException("Unsupported file format")
+            self._load(config)
         except FileNotFoundError:
             logging.error("Configurations could not be loaded. Was it deleted/relocated perhaps?")
             raise PerfectConfigRuntimeException("Configurations not found")
@@ -222,7 +152,6 @@ class ConfigStore(dict):
         else:
             logger.info("Loading configurations at: " + str(self._config_loc.absolute()))
             self._from_file()
-            
 
     def remove(self):
         """A managed function to remove all related configuration files and configurations from the object."""
@@ -230,7 +159,7 @@ class ConfigStore(dict):
             for path in self._config_loc.iterdir():
                 os.remove(path)
             os.rmdir(self._config_loc)
-        self.clear()
+        # self.clear()
 
 
 config_store: ConfigStore = ConfigStore()

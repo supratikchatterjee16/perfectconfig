@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "perfectconfig"
-version = "1.2.5"
+version = "1.3.0"
 dependencies = [
     "appdirs",
     "pyyaml",
@@ -36,3 +36,9 @@ Documentation = "https://readthedocs.org"
 Repository = "https://github.com/supratikchatterjee16/perfectconfig.git"
 "Bug Tracker" = "https://github.com/supratikchatterjee16/perfectconfig/issues"
 Changelog = "https://github.com/supratikchatterjee16/iam/blob/master/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "black", "isort", "mypy", "flake8"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=src/perfectconfig --cov-report=term-missing --cov-report=lcov"

@@ -1,6 +1,6 @@
 # Perfect Config
 
-Manage your configuations in a mechanism similar to [SQLAlchemy](https://www.sqlalchemy.org/).
+Manage your deployment configuations in a mechanism similar to [SQLAlchemy](https://www.sqlalchemy.org/).
 
 What does it provide?
 

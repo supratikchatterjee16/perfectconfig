@@ -15,8 +15,6 @@ class ConfigProperty:
         self._val = value
 
     def __get__(self, instance, objtype=None):
-        # if instance is None:
-        #     return self
         return self._val
 
     def __eq__(self, other):
