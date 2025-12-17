@@ -12,6 +12,7 @@ class SecondTestConfig(GlobalConfig):
     __test__ = False
     val = ConfigProperty(str, 'value', default="value")
     some_default = ConfigProperty(str, 'default', default="some_default")
+    env = ConfigProperty(str, 'env_var', default="$PERFECTCONFIG_PROFILE")
 
 config_store.track()
 

@@ -41,26 +41,26 @@ class ConfigStore(dict):
         self._buffer.clear()
     
     def _load(self, config: Optional[GlobalConfig] = None):
-        load, name_template = (json.load, "{}.json") if self._format == "json" else (yaml.safe_load, "{}.yml")
+        load, name_template = (json.loads, "{}.json") if self._format == "json" else (yaml.safe_load, "{}.yml")
 
         if self._single_file:
             with open(
                 os.path.join(self._config_loc, name_template.format("config")), "r"
             ) as config_file:
-                self._buffer = load(config_file)
+                self._buffer = load(os.path.expandvars(config_file.read()))
         else:
             if config is None:
                 for key in self.keys():
                     with open(
                         os.path.join(self._config_loc, name_template.format(key)), "r"
                     ) as config_file:
-                        self._buffer[key] = load(config_file)
+                        self._buffer[key] = load(os.path.expandvars(config_file.read()))
             else:
                 with open(
                     os.path.join(self._config_loc, name_template.format(config._name)),
                     "r",
                 ) as config_file:
-                    self._buffer.update(load(config_file))
+                    self._buffer.update(load(os.path.expandvars(config_file.read())))
     
     def save(self, config: GlobalConfig):
         self._load(config)
@@ -80,7 +80,7 @@ class ConfigStore(dict):
         current_module = inspect.getmodule(inspect.stack()[1][0])
         for name, obj in inspect.getmembers(current_module, inspect.isclass):
             if issubclass(obj, GlobalConfig) and obj is not GlobalConfig:
-                logging.info("Configuration Definition found for " + name)
+                logging.info("Loading configuration for " + name)
                 self[obj._name] = obj()
                 if self._config_loc is not None:
                     self._from_file(obj)

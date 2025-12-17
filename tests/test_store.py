@@ -23,25 +23,20 @@ class TestStore:
         config_path = Path(appdirs.user_config_dir('perfectconfig-test', 'conceivilize'))
 
         assert os.path.exists(config_path)
-        # self.assertTrue(os.path.exists(config_path))
         files = []
         for path in config_path.iterdir():
             files.append(path)
         
         # Test if only one config file is created
-        # self.assertEqual(len(files), 1 if self.is_single else 2)
         assert len(files) == (1 if self.is_single else 2)
 
         test_config :TestConfig = config_store['test-config']
 
         # Test if test_config is not None
-        # self.assertIsNotNone(test_config)
         assert test_config is not None
 
-        # self.assertTrue(issubclass(test_config.__class__, GlobalConfig))
         assert issubclass(test_config.__class__, GlobalConfig)
 
-        # self.assertEqual(test_config.some_default, "some_default")
         assert test_config.some_default == "some_default"
     
     def test_config_modification_persistence(self):
@@ -53,18 +48,12 @@ class TestStore:
         # Reload the config store to ensure persistence
         config_store.initialize('conceivilize', 'perfectconfig-test', single_file=self.is_single, format=self.type_name)
         reloaded_config :TestConfig = config_store['test-config']
-
-        # self.assertNotEqual(reloaded_config.val, original_value)
-        # self.assertEqual(reloaded_config.val, new_value)
         assert reloaded_config.val != original_value
         assert reloaded_config.val == new_value
 
     def test_for_multiple_configs(self):
         from .helpers.mocks import SecondTestConfig
         second_config :SecondTestConfig = config_store['second-config']
-        # self.assertIsNotNone(second_config)
-        # self.assertTrue(issubclass(second_config.__class__, GlobalConfig))
-        # self.assertEqual(second_config.some_default, "some_default")
         assert second_config is not None
         assert issubclass(second_config.__class__, GlobalConfig)
         assert second_config.some_default == "some_default"
@@ -77,5 +66,12 @@ class TestStore:
             'name': test_config.name,
             'default': test_config.some_default
         }
-        # self.assertEqual(config_dict, expected_dict)
         assert config_dict == expected_dict
+
+    def test_env_variable_expansion(self):
+        from .helpers.mocks import SecondTestConfig
+        second_config :SecondTestConfig = config_store['second-config']
+        expected_value = os.getenv('PERFECTCONFIG_PROFILE', '')
+        assert expected_value is not None
+        assert expected_value != ''
+        assert second_config.env == expected_value

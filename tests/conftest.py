@@ -1,3 +1,4 @@
+import os
 from perfectconfig import config_store
 import pytest
 from tests.helpers.mocks import TestConfig
@@ -45,8 +46,9 @@ def setup_per_test(profile_data):
 @pytest.fixture(scope="class", autouse=True)
 def class_setup_teardown(profile_data):
     # setUpClass
-
+    os.environ['PERFECTCONFIG_PROFILE'] = 'perfectconfig-test'
     yield
 
     # tearDownClass
     config_store.remove()
+    del os.environ['PERFECTCONFIG_PROFILE']
